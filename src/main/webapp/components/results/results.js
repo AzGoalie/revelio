@@ -1,6 +1,8 @@
 import React, { useState, forwardRef } from 'react'
-import { Set, fromJS } from 'immutable'
+import { Set, fromJS, getIn } from 'immutable'
 import { useKeyPressed, useSelectionInterface } from '../../react-hooks'
+import { useMutation, useQuery } from '@apollo/react-hooks'
+import gql from 'graphql-tag'
 
 import Typography from '@material-ui/core/Typography'
 import More from '@material-ui/icons/UnfoldMore'
@@ -10,6 +12,7 @@ import Button from '@material-ui/core/Button'
 
 import MaterialTable from 'material-table'
 
+import LinearProgress from '@material-ui/core/LinearProgress'
 import AddBox from '@material-ui/icons/AddBox'
 import ArrowDownward from '@material-ui/icons/ArrowDownward'
 import Check from '@material-ui/icons/Check'
@@ -177,6 +180,13 @@ const getAttributeKeysFromResults = results => {
   }, Set())
 }
 
+const mutation = gql`
+  mutation updateUserPreferences($userPreferences: Json) {
+    updateUserPreferences(userPreferences: $userPreferences)
+  }
+`
+
+
 const Results = props => {
   const { results, attributes, onSelect } = props
   const selection = Set(props.selection)
@@ -199,6 +209,30 @@ const Results = props => {
 
   const columns = allAttributesToColumns(attributes, hidden)
 
+
+
+const [updateUserPreferences] = useMutation(mutation, {
+  update: (cache, { data: { updateUserPreferences } }) => {
+    const columnOrder = updateUserPreferences
+    const oldColumnOrder = cache.readQuery({ query })
+    cache.writeQuery({
+      query,
+      data: {
+        user: {
+          preferences: {
+            columnOrder: updateUserPreferences.columnOrder,
+          __typename: 'UserPreferences',
+          },
+          __typename: 'User',
+        },
+      },
+    })
+  },
+})
+
+
+
+
   const onSelectionChange = selectedRows => {
     const selectedIds = selectedRows.map(rowData => rowData.id)
     const setOfIds = Set(selectedIds)
@@ -220,6 +254,41 @@ const Results = props => {
     setLastSelected(e.shiftKey ? lastSelected : rowId)
   }
 
+  const onColumnDragged = (a, b, c, d) => {
+
+    const columnOrder = columns
+      .filter(column => !column.hidden)
+      .sort((a, b) => {
+        return a.tableData.columnOrder - b.tableData.columnOrder
+      })
+      .map(column => column.title)
+
+
+    const userPreferences = {columnOrder}
+        const response = updateUserPreferences({
+          variables: { userPreferences },
+          optimisticResponse: {
+            updateUserPreferences: columnOrder,
+          },
+        })
+  }
+
+  const onChangeColumnHidden = (a, b, c, d) => {
+    console.log('=== Column Hidden ===')
+    console.log('a', a)
+    console.log('b', b)
+    console.log('c', c)
+    console.log('d', d)
+  }
+
+  const onOrderChange = (a, b, c, d) => {
+    console.log('=== Order Change ===')
+    console.log('a', a)
+    console.log('b', b)
+    console.log('c', c)
+    console.log('d', d)
+  }
+
   return (
     <div style={{ maxWidth: '100%' }}>
       <MaterialTable
@@ -232,12 +301,48 @@ const Results = props => {
         style={{
           userSelect: allowTextSelect ? 'auto' : 'none',
         }}
+        onColumnDragged={onColumnDragged}
+        onChangeColumnHidden={onChangeColumnHidden}
+        onOrderChange={onOrderChange}
       />
     </div>
   )
 }
 
+const query = gql`
+  query UserPreferences {
+    user {
+      preferences {
+        columnOrder
+      }
+    }
+  }
+`
+
+const LoadingComponent = () => <LinearProgress />
+
 const Container = props => {
+  const { loading, error, data = {} } = useQuery(query)
+  if (loading) {
+    return <LoadingComponent />
+  }
+  if (error) {
+    return <Error message={error} />
+  }
+
+  const attributes = getIn(
+    data,
+    ['user', 'preferences', 'columnOrder'],
+    props.attributes
+  )
+
+  console.log('data', data)
+  console.log('attributes', attributes)
+
+  return <WithSelectionInterface {...props} attributes={attributes} />
+}
+
+const WithSelectionInterface = props => {
   const [selection, onSelect] = useSelectionInterface()
   return <Results {...props} selection={selection} onSelect={onSelect} />
 }
