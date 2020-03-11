@@ -243,7 +243,7 @@ const getFilterMap = props => {
   return Map({ text: '*' })
 }
 
-const createQuery = filterMap => {
+export const createQuery = filterMap => {
   const sourceIds = get(filterMap, 'sources')
   const sorts = get(filterMap, 'sortOrder')
   return populateDefaultQuery(toFilterTree(filterMap), sourceIds, sorts)

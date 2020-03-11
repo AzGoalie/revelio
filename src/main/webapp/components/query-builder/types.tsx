@@ -2,7 +2,7 @@ import { GeometryJSON } from 'geospatialdraw/bin/geometry/geometry'
 
 export type QueryType = QuerySettingsType & {
   title?: string
-  filterTree?: FilterGroupType
+  filterTree?: FilterGroupType | QueryFilter
   id?: string
   metacard_modified?: string
   metacard_owner?: string
