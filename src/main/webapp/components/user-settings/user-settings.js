@@ -15,6 +15,7 @@ import ScheduleIcon from '@material-ui/icons/Schedule'
 import SearchIcon from '@material-ui/icons/Search'
 import SettingsIcon from '@material-ui/icons/Settings'
 import VisibilityOffIcon from '@material-ui/icons/VisibilityOff'
+import LockIcon from '@material-ui/icons/Lock'
 import { fromJS, Map } from 'immutable'
 import React from 'react'
 import { useApolloFallback, useUserPrefs } from '../../react-hooks'
@@ -24,6 +25,7 @@ import NotificationSettings from './notification-settings'
 import SearchSettings from './search-settings'
 import TimeSettings from './time-settings'
 import ThemeSettings from './theme-settings'
+import CSCSettinngs from './csc-settings/content-store-credentials-settings'
 import LinearProgress from '@material-ui/core/LinearProgress'
 import InlineRetry from '../network-retry/inline-retry'
 
@@ -46,6 +48,7 @@ const settings = [
   generateSetting('Search Options', SearchIcon, SearchSettings),
   generateSetting('Time', ScheduleIcon, TimeSettings),
   generateSetting('Hidden', VisibilityOffIcon, HiddenResultsSettings),
+  generateSetting('Content Store Credentials', LockIcon, CSCSettinngs),
 ]
 
 const AllSettings = props => (
